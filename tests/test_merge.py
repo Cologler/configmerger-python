@@ -13,12 +13,44 @@ def test_merge_nothing():
     with pytest.raises(ValueError):
         assert Merger().merge([])
 
-def test_merge_dict():
+def test_merge_many_none():
+    assert Merger().merge([ None ]) is None
+    assert Merger().merge([ None, None ]) is None
+    assert Merger().merge([ None, None, None ]) is None
+
+def test_merge_object_default():
     assert Merger().merge([
         {'a': 1},
-        {'a': 2, 'b': 3},
-        {'b': 4}
-    ]) == {'a': 2, 'b': 4}
+        True,
+        None
+    ]) == True
+
+
+def test_merge_dict_default():
+    assert Merger().merge([
+          {'a': 1,         'c': 7},
+          {'a': 2, 'b': 3        },
+          {        'b': 4        },
+    ]) == {'a': 2, 'b': 4, 'c': 7}
+
+def test_merge_list_default():
+    assert Merger().merge([
+        None,
+        [1, 2, 5],
+        None,
+        [4, 7],
+        None,
+    ]) == [4, 7, 1, 2, 5]
+
+def test_merge_list_not_connect():
+    merger = Merger(connect_list=False)
+    assert merger.merge([
+        None,
+        [1, 2, 5],
+        None,
+        [4, 7],
+        None,
+    ]) == [4, 7]
 
 def test_merge_nested_dict():
     assert Merger().merge([
@@ -29,40 +61,3 @@ def test_merge_nested_dict():
         {'root': {'child': {'a': 1241, 'c': 1453}}},
         {'root': {'child': {'a': 4124, 'b': 4322}}}
     ]) == {'root': {'child': {'a': 4124, 'b': 4322, 'c': 1453, 'none_is_skiped': 222}}}
-
-def test_merge_list():
-    assert Merger().merge([
-        [1, 2, 5],
-        None,
-        [4, 7]
-    ]) == [4, 7, 1, 2, 5]
-
-def test_merge_list_without_connect():
-    merger = Merger()
-    merger.connect_list = False
-    assert merger.merge([
-        [1, 2, 5],
-        None,
-        [4, 7]
-    ]) == [4, 7]
-
-def test_merge_object():
-    assert Merger().merge([
-        {'a': 1},
-        True,
-        None
-    ]) == True
-
-def test_merge_all_none():
-    assert Merger().merge([ None ]) == None
-    assert Merger().merge([ None, None ]) == None
-    assert Merger().merge([ None, None, None ]) == None
-
-def test_merge_stop_when_type_changed():
-    assert Merger().merge([
-        {'a': 1},
-        1,
-        {'b': 2},
-        None,
-        {'c': 3},
-    ]) == {'b': 2, 'c': 3}
