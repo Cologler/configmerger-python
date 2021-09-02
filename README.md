@@ -34,7 +34,6 @@ merger.merge([
 #   {'a': 2, 'b': 4}
 
 # for list, default behavior is connect each
-# change `merger.connect_list` to `False` can change this behavior
 merger.merge([ [1, 2, 3], [4, 5] ]) # [4, 5, 1, 2, 3]
 
 # for str, int and others, latest have highest priority
