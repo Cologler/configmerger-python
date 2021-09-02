@@ -45,6 +45,8 @@ class _MergerHandlerTreeNode:
         if not keys:
             self._value = handler
         else:
+            if self._children is None:
+                self._children = {}
             node = self._children.setdefault(keys[0], _MergerHandlerTreeNode())
             node.set_handler(keys[1:], handler)
 
@@ -155,10 +157,12 @@ class MergeMethods:
 
     @staticmethod
     def first(values: list, keys: tuple, merge: callable):
+        assert values
         return MergeMethods._get_typed_values(values)[0]
 
     @staticmethod
     def last(values: list, keys: tuple, merge: callable):
+        assert values and values[-1] is not None
         return values[-1]
 
 __all__ = ['Merger', ]

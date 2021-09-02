@@ -5,6 +5,8 @@
 #
 # ----------
 
+from unittest.mock import MagicMock
+
 import pytest
 
 from configmerger import Merger
@@ -44,6 +46,33 @@ def test_merge_dict_nested_default():
         {'root': {'child': {'a': 4124, 'b': 4322}}}
     ]) == {'root': {'child': {'a': 4124, 'b': 4322, 'c': 1453, 'none_is_skiped': 222}}}
 
+def test_merge_dict_nested_configured():
+    keys_mock = MagicMock()
+    values_mock = MagicMock()
+    def handler(values, keys, *_):
+        keys_mock(keys)
+        values_mock(values)
+        return values[-2]
+
+    merger = Merger()
+    merger.configure(('root', str, 'a'), handler)
+    assert merger.merge([
+        {'root': {'child': {'hided': 111}}},
+        {'root': {'child': 1}},
+        {'root': {'child': {'none_is_skiped': 222}}},
+        {'root': {'child': None}},
+        {'root': {'child': {'a': 1241, 'c': 1453}}},
+        {'root': {'child': {'a': 4124, 'b': 4322}}}
+    ]) == {'root': {'child': {'a': 1241, 'b': 4322, 'c': 1453, 'none_is_skiped': 222}}} # a is 1241 now
+
+    assert keys_mock.called and values_mock.called
+    assert keys_mock.call_args == (
+        (('root', 'child', 'a'), ),
+    )
+    assert values_mock.call_args == (
+        ([None, 1241, 4124], ),
+    )
+
 def test_merge_list_default():
     assert Merger().merge([
         None,
@@ -53,7 +82,7 @@ def test_merge_list_default():
         None,
     ]) == [4, 7, 1, 2, 5]
 
-def test_merge_list_not_connect():
+def test_merge_list_configured_last():
     merger = Merger()
     merger.configure(list, 'last')
     assert merger.merge([
