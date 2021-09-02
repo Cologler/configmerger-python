@@ -21,11 +21,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install package manager
-        run: pip install poetry poetry-dynamic-versioning
+      - name: Install package manager (poetry)
+        run: pip install poetry
+
+      - name: Install package manager plugins
+        run: pip install poetry-dynamic-versioning
 
       - name: Install dependencies
         run: poetry install
 
       - name: Test with pytest
-        run: poetry run python -m pytest --cov=anyioc --cov-report=term
+        run: poetry run python -m pytest --cov=configmerger --cov-report=term
