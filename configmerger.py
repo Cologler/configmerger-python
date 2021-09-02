@@ -60,10 +60,9 @@ class _MergerHandlerTreeNode:
                 node.find_all(keys[1:], result)
 
 class Merger:
-    def __init__(self, *, connect_list: bool=True) -> None:
+    def __init__(self) -> None:
         self._keys_handlers = _MergerHandlerTreeNode()
         self._type_handlers = {}
-        self.__connect_list = connect_list
 
         self.configure(object, self._merge_objects)
         self.configure(list, self._merge_lists)
@@ -71,11 +70,12 @@ class Merger:
 
     def configure(self, keys: Tuple[Union[type, str, int]], handler: Union[Callable, str]):
         if isinstance(handler, str):
-            handler = vars(MergeMethods).get(handler) # prevent use method from object
+            name = handler
+            handler = vars(MergeMethods).get(name) # prevent use method from object
             if isinstance(handler, staticmethod):
                 handler = handler.__func__
-            if handler is None:
-                raise ValueError(f'unknown handler name: {handler}')
+            if handler is None or name[0] == '_':
+                raise ValueError(f'unknown handler name: {name}')
 
         if not callable(handler):
             raise TypeError(f'handler must be callable or str, not {handler!r}')
@@ -123,11 +123,13 @@ class Merger:
     @staticmethod
     def _merge_objects(values: List[Any], keys: Tuple[Union[str, int]], _):
         'The default merge objects method.'
+
         return values[-1]
 
     @staticmethod
     def _merge_dicts(values: List[Any], keys: Tuple[Union[str, int]], merge):
         'The default merge dicts method.'
+
         rv = {}
         typed_values = get_typed_values_from_end(values, dict)
         values_keys = set(itertools.chain(*typed_values))
@@ -137,9 +139,6 @@ class Merger:
 
     def _merge_lists(self, values: List[Any], *_):
         'The default merge lists method.'
-
-        if not self.__connect_list:
-            return values[-1]
 
         return list(
             itertools.chain(
@@ -151,8 +150,12 @@ class Merger:
 
 class MergeMethods:
     @staticmethod
+    def _get_typed_values(values: list):
+        return get_typed_values_from_end(values, type(values[-1]))
+
+    @staticmethod
     def first(values: list, keys: tuple, merge: callable):
-        return values[0]
+        return MergeMethods._get_typed_values(values)[0]
 
     @staticmethod
     def last(values: list, keys: tuple, merge: callable):

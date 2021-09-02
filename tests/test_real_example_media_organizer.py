@@ -17,7 +17,7 @@ def test_multi_level_regexs():
         'regexps_show': ['7', '8', '9'],
         'regexps_season': ['10', '11', '12']
     }
-    assert Merger(connect_list=True).merge([appconf, userconf]) == {
+    assert Merger().merge([appconf, userconf]) == {
         'regexps_show': ['7', '8', '9', '1', '2', '3'],
         'regexps_season': ['10', '11', '12', '4', '5', '6'],
         'someotherfields': 'xxxxxx'
