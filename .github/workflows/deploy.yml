@@ -1,0 +1,30 @@
+name: Deploy
+
+on:
+  push:
+    tags: '*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install package manager (poetry)
+        run: pip install poetry
+
+      - name: Install package manager plugins
+        run: pip install poetry-dynamic-versioning
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Publish to Pypi
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: poetry publish --build -u __token__ -p $PYPI_TOKEN
