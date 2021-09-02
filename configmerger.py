@@ -18,13 +18,12 @@ def trim_none_from_end(items: list):
                 return items[:tl-i]
     return []
 
-def get_typed_values_from_end(values: List[Any], types: Union[type, Tuple[type, ...]],
-        *, skip_none: bool = True):
+def get_typed_values_from_end(
+        values: List[Any], types: Union[type, Tuple[type, ...]], *,
+        skip_none: bool = True):
     '''
     A helper function to get values match the `types` from end,
     stop until the value is mismatch, unless it is `None`.
-
-    Skip all `None` values.
     '''
     rv = []
     for value in reversed(values):
@@ -64,12 +63,10 @@ class Merger:
     def __init__(self, *, connect_list: bool=True) -> None:
         self._keys_handlers = _MergerHandlerTreeNode()
         self._type_handlers = {}
+        self.__connect_list = connect_list
 
         self.configure(object, self._merge_objects)
-        if connect_list:
-            self.configure(list, self._merge_lists)
-        else:
-            self.configure(list, MergeMethods.last)
+        self.configure(list, self._merge_lists)
         self.configure(dict, self._merge_dicts)
 
     def configure(self, keys: Tuple[Union[type, str, int]], handler: Union[Callable, str]):
@@ -124,11 +121,13 @@ class Merger:
         raise TypeError(f'unsupported type: {type(last_value)}')
 
     @staticmethod
-    def _merge_objects(values: List[Any], keys: Tuple[Union[str, int]], merge):
+    def _merge_objects(values: List[Any], keys: Tuple[Union[str, int]], _):
+        'The default merge objects method.'
         return values[-1]
 
     @staticmethod
     def _merge_dicts(values: List[Any], keys: Tuple[Union[str, int]], merge):
+        'The default merge dicts method.'
         rv = {}
         typed_values = get_typed_values_from_end(values, dict)
         values_keys = set(itertools.chain(*typed_values))
@@ -136,12 +135,16 @@ class Merger:
             rv[k] = merge([tv.get(k) for tv in typed_values], keys + (k, ))
         return rv
 
-    @staticmethod
-    def _merge_lists(values: List[Any], keys: Tuple[Union[str, int]], merge):
+    def _merge_lists(self, values: List[Any], *_):
+        'The default merge lists method.'
+
+        if not self.__connect_list:
+            return values[-1]
+
         return list(
             itertools.chain(
                 *reversed(
-                    get_typed_values_from_end(values, list)
+                    get_typed_values_from_end(values, list, skip_none=True)
                 )
             )
         )
